@@ -44,4 +44,4 @@ with open('input.in') as f:
     # Part 1: 69177
     # Part 2: 207456
     print(f"Part 1: {summation_list[0]}")
-    print(f"Part 2: {summation_list[0] + summation_list[1] + summation_list[2]}")
+    print(f"Part 2: {sum(summation_list[0:3])}")
