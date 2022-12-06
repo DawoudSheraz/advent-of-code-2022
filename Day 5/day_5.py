@@ -25,10 +25,7 @@ def generate_stacks(data_values):
 
 
 def get_tops(stacks):
-    output = ''
-    for stack in stacks:
-        output += stack[0]
-    return output
+    return ''.join(stack[0] for stack in stacks)
 
 
 def perform_move(stacks, move_command):
