@@ -9,11 +9,9 @@ def create_data_list(data):
     return [list(map(int, x)) for x in data.splitlines()]
 
 
-def is_visible(row, column, grid, max_row, max_column):
-
-    data_value = grid[row][column]
-    left = grid[row][max(column-1, 0)::-1]
-    right = grid[row][min(column+1, max_column):]
+def get_directional_lists(row, column, grid, max_row, max_column):
+    left = grid[row][max(column - 1, 0)::-1]
+    right = grid[row][min(column + 1, max_column):]
     top, bottom = [], []
     counter = 0
 
@@ -22,10 +20,16 @@ def is_visible(row, column, grid, max_row, max_column):
         counter += 1
 
     counter += 1
+
     while counter < max_row:
         bottom.append(grid[counter][column])
         counter += 1
 
+    # top is reversed to maintain the correct order of elements w.r.t grid position
+    return left, right, top[::-1], bottom
+
+
+def is_visible(data_value, left, right, top, bottom):
     return any(
         (len([x for x in left if x < data_value]) == len(left),
          len([x for x in right if x < data_value]) == len(right),
@@ -42,23 +46,7 @@ def get_score(value, data_list):
     return len(data_list)
 
 
-def get_tectonic_score(row, column, grid, max_row, max_column):
-    data_value = grid[row][column]
-    left = grid[row][max(column-1, 0)::-1]
-    right = grid[row][min(column+1, max_column):]
-    top, bottom = [], []
-    counter = 0
-
-    while counter < row:
-        top.append(grid[counter][column])
-        counter += 1
-    top = top[::-1]
-
-    counter += 1
-    while counter < max_row:
-        bottom.append(grid[counter][column])
-        counter += 1
-
+def get_scenic_score(data_value, left, right, top, bottom):
     left_score = get_score(data_value, left)
     right_score = get_score(data_value, right)
     top_score = get_score(data_value, top)
@@ -66,7 +54,7 @@ def get_tectonic_score(row, column, grid, max_row, max_column):
     return left_score * right_score * bottom_score * top_score
 
 
-def get_visible_count(grid):
+def solve(grid):
     rows = len(grid)
     columns = len(grid[0])
     visible = 2 * (rows + columns) - 4
@@ -74,9 +62,11 @@ def get_visible_count(grid):
 
     for row in range(1, rows - 1):
         for column in range(1, columns - 1):
-            if is_visible(row, column, grid, rows, columns):
+            data_value = grid[row][column]
+            left, right, top, bottom = get_directional_lists(row, column, grid, rows, columns)
+            if is_visible(data_value, left, right, top, bottom):
                 visible += 1
-            score = get_tectonic_score(row, column, grid, rows, columns)
+            score = get_scenic_score(data_value, left, right, top, bottom)
             if score > max_score:
                 max_score = score
 
@@ -84,10 +74,9 @@ def get_visible_count(grid):
 
 
 with open('input.in') as f:
-    # Note: Refactor the above common code
     data = f.read()
-    visible, max_score = get_visible_count(create_data_list(data))
+    visible_count, max_height_score = solve(create_data_list(data))
     # Part 1: 1794
     # Part 2: 199272
-    print(f"Part 1: {visible}")
-    print(f"Part 2: {max_score}")
+    print(f"Part 1: {visible_count}")
+    print(f"Part 2: {max_height_score}")
