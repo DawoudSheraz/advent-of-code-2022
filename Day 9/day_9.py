@@ -53,7 +53,7 @@ def parse_knots(head_row, head_col, knots):
     return tail_x, tail_y, updated_knots
 
 
-def traverse_grid_part_2(visited_grid, direction, steps, head_x, head_y, knots):
+def traverse_grid(visited_grid, direction, steps, head_x, head_y, knots):
     if direction in ['U', 'D']:
         counter = head_x
         if direction == 'U':
@@ -88,7 +88,7 @@ def solve(data, knots_length=2):
     knots = [(0, 0) for _ in range(knots_length)]
     for action in data.splitlines():
         command = action.split(' ')
-        head_x, head_y, knots = traverse_grid_part_2(visited, command[0], int(command[1]), head_x, head_y, knots)
+        head_x, head_y, knots = traverse_grid(visited, command[0], int(command[1]), head_x, head_y, knots)
     return len(visited)
 
 
