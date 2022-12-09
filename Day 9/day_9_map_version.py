@@ -18,12 +18,19 @@ L 25
 U 20'''
 
 
+DIRECTION_MAP = {
+    'U': (-1, 0),
+    'D': (1, 0),
+    'R': (0, 1),
+    'L': (0, -1)
+}
+
+
 def diagonal(head_row, head_col, tail_row, tail_col):
     return abs(head_row - tail_row) == 1 and abs(tail_col - head_col) == 1
 
 
 def determine_tail_coords(head_row, head_col, tail_row, tail_col):
-
     row_diff = head_row - tail_row
     col_diff = head_col - tail_col
     coords_diff = abs(row_diff) + abs(col_diff)
@@ -42,7 +49,6 @@ def determine_tail_coords(head_row, head_col, tail_row, tail_col):
 
 
 def parse_knots(head_row, head_col, knots):
-
     updated_knots = [(head_row, head_col)]
     for count in range(len(knots) - 1):
         head_row, head_col = updated_knots[count][0], updated_knots[count][1]
@@ -54,32 +60,12 @@ def parse_knots(head_row, head_col, knots):
 
 
 def traverse_grid(visited_grid, direction, steps, head_x, head_y, knots):
-    if direction in ['U', 'D']:
-        counter = head_x
-        if direction == 'U':
-            while counter > head_x - steps:
-                counter -= 1
-                tail_x, tail_y, knots = parse_knots(counter, head_y, knots)
-                visited_grid.add((tail_x, tail_y))
-        else:
-            while counter < head_x + steps:
-                counter += 1
-                tail_x, tail_y, knots = parse_knots(counter, head_y, knots)
-                visited_grid.add((tail_x, tail_y))
-        return counter, head_y, knots
-    else:
-        counter = head_y
-        if direction == 'R':
-            while counter < head_y + steps:
-                counter += 1
-                tail_x, tail_y, knots = parse_knots(head_x, counter, knots)
-                visited_grid.add((tail_x, tail_y))
-        else:
-            while counter > head_y - steps:
-                counter -= 1
-                tail_x, tail_y, knots = parse_knots(head_x, counter, knots)
-                visited_grid.add((tail_x, tail_y))
-        return head_x, counter, knots
+    for count in range(steps):
+        dx, dy = DIRECTION_MAP[direction]
+        head_x, head_y = head_x + dx, head_y + dy
+        tail_x, tail_y, knots = parse_knots(head_x, head_y, knots)
+        visited_grid.add((tail_x, tail_y))
+    return head_x, head_y, knots
 
 
 def solve(data, knots_length=2):
@@ -96,8 +82,7 @@ with open('input.in') as f:
     data = f.read()
     # Part 1: 6357
     # Part 2: 2627
-    # Note: see day_9_map_version.py for elegant solution that uses dict for navigation.
-    # This is also a note for my future self to use map to easily navigate 2d grid DS instead
-    # of intensive if-else.
+
+    # Note: This solution uses dict to navigate grid co-ords. A much elegant way.
     print(f"Part 1: {solve(data, 2)}")
     print(f"Part 2: {solve(data, 10)}")
