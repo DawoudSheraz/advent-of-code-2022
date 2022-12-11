@@ -1,6 +1,5 @@
 
 import re
-from collections import defaultdict
 
 TEST_INPUT = '''Monkey 0:
   Starting items: 79, 98
@@ -33,14 +32,13 @@ Monkey 3:
 
 class Monkey:
 
-    def __init__(self, items, worry_ops, division_check, monkey_index_true, monkey_index_false, worry_check=True):
+    def __init__(self, items, worry_ops, division_check, monkey_index_true, monkey_index_false):
 
         self.items = list(map(int, items))
         self.division_check = int(division_check)
         self.monkey_index_true = int(monkey_index_true)
         self.monkey_index_false = int(monkey_index_false)
         self.worry_ops = worry_ops
-        self.worry_check = worry_check
 
     def __str__(self):
         return ','.join(map(str,self.items))
@@ -58,10 +56,10 @@ class Monkey:
         elif ops == '*':
             return item * value
 
-    def determine_monkey_throw_index(self):
+    def determine_monkey_throw_index(self, worry_modulus=None):
         for item in self.items:
             new_worry = self.get_updated_worry(item)
-            new_worry = new_worry // 3 if self.worry_check else new_worry
+            new_worry = new_worry // 3 if not worry_modulus else new_worry % worry_modulus
             if new_worry % self.division_check == 0:
                 yield new_worry, self.monkey_index_true
             else:
@@ -69,7 +67,7 @@ class Monkey:
         self.items = []
 
 
-def create_monkey_list(data, worry_check=True):
+def create_monkey_list(data):
     monkey_list = []
     data = data.splitlines()
 
@@ -79,26 +77,40 @@ def create_monkey_list(data, worry_check=True):
         division = re.findall('\\d+', data[count+3])[0]
         truth = re.findall('\\d+', data[count + 4])[0]
         false = re.findall('\\d+', data[count + 5])[0]
-        monkey = Monkey(items, ops, division, truth, false, worry_check)
+        monkey = Monkey(items, ops, division, truth, false)
         monkey_list.append(monkey)
     return monkey_list
 
 
-def part_1(data, rounds=20, worry_check=True):
-    monkey_inspect_count = defaultdict(int)
-    monkey_list = create_monkey_list(data, worry_check)
+def solve(data, rounds=20, calculate_modulus_worry=False):
+    monkey_list = create_monkey_list(data)
+    monkey_inspect_count = [0] * len(monkey_list)
+
+    mod = None
+    if calculate_modulus_worry:
+        # Part 2: I have to thank reddit convos for that. The divisors are all prime, so their
+        # product is LCM. LCM reduces the worry level and avoids the long division.
+        # part of comment from reddit
+        # "It stems from the fact that if you have x % p = y, then x % (p*q) = y as well, if q > 1."
+        # Well, this seems like one of things that a lot of speed programmers with sharp maths got very quickly. I
+        # didn't and had to check reddit. Learned something new, that's what matters.
+        mod = 1
+        for monkey in monkey_list:
+            mod *= monkey.division_check
 
     for rd in range(rounds):
         for idx, monkey in enumerate(monkey_list):
-            for item, new_monkey_index in monkey.determine_monkey_throw_index():
+            for item, new_monkey_index in monkey.determine_monkey_throw_index(worry_modulus=mod):
                 monkey_list[new_monkey_index].add_item(item)
                 monkey_inspect_count[idx] += 1
-    out_list = list(sorted((monkey_inspect_count.values()), reverse=True))
-    return out_list[0] * out_list[1]
 
+    out_list = sorted(monkey_inspect_count)
+    return out_list[-1] * out_list[-2]
 
-# print(part_1(TEST_INPUT, 10000, False))
 
 with open('input.in') as f:
     data = f.read()
-    print(part_1(data))
+    # Part 1: 120384
+    # Part 2: 32059801242
+    print(f"Part 1: {solve(data)}")
+    print(f"Part 2: {solve(data, 10000, True)}")
