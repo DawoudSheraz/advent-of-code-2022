@@ -96,7 +96,7 @@ def solve(data, rocks=2022):
                     # a need to simulate the remaining rocks. Just determine the cycle size and the remaining
                     # cycles and add the value to current height
                     # Again, reddit. Man I am bad at figuring out hidden items in AoC.
-                    if rocks % rock_diff == rock_count % rock_diff:
+                    if (rocks - previous_rock_count) % rock_diff == 0:
                         cycles_left = (rocks - rock_count) // rock_diff
                         cycle_size = get_top(visited_grid) - prev_top
                         return get_top(visited_grid) + (cycles_left * cycle_size)
