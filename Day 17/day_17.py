@@ -60,21 +60,50 @@ def move_rock(dx, dy, rock, visited_grid, register_visit):
 
 
 def get_next_y(visited_grid):
-    max_y = max([x[1] for x in visited_grid])
-    return max_y + 4
+    return get_top(visited_grid) + 4
 
 
-def solve(data, height=2022):
+def get_top(visited_grid):
+    return max([x[1] for x in visited_grid])
+
+
+def solve(data, rocks=2022):
     visited_grid = set((x, 0) for x in range(7))  # by default, add floor
     rock_count = 0
     action_counter = -1
+    sequence_checker = {}
 
-    while rock_count < height:
+    while rock_count < rocks:
         rock_id = rock_count % 5
         rock = get_rock(rock_id, get_next_y(visited_grid))
         while True:
             action_counter = (action_counter + 1) % len(data)
             action = data[action_counter]
+            if rock_count > 2022:  # Using part 1 rock count as threshold/starting point for cycle sequence checks
+                # Reddit for help again, Welp I am awful at this.
+                # Key of active_rock and jet operation position is used as identifier
+                # for cycle, the pair is bound to repeat.
+                sequence_key = (rock_id, action_counter)
+                if sequence_key in sequence_checker:
+                    previous_rock_count, prev_top = sequence_checker[sequence_key]
+                    rock_diff = rock_count - previous_rock_count
+                    # Cycle does not begin from the start but rather sometime after the start.
+                    # Modulus here is the main thing. Linking back to Day 11 Monkey worry problem,
+                    # the modulus was used to reduce the worry level to bring it within range of division.
+                    # The same applies here. If the modulus of total rocks with the rock diff is same
+                    # as modulus of current rock with rock diff, that means the cycle will be repeating
+                    # in intervals from current count till the total number of rocks. So there really isnt
+                    # a need to simulate the remaining rocks. Just determine the cycle size and the remaining
+                    # cycles and add the value to current height
+                    # Again, reddit. Man I am bad at figuring out hidden items in AoC.
+                    if rocks % rock_diff == rock_count % rock_diff:
+                        cycles_left = (rocks - rock_count) // rock_diff
+                        cycle_size = get_top(visited_grid) - prev_top
+                        return get_top(visited_grid) + (cycles_left * cycle_size)
+                else:
+                    # Store the current rock count and the max height
+                    sequence_checker[sequence_key] = (rock_count, get_top(visited_grid))
+
             if action == '<':
                 if can_move(-1, 0, rock, visited_grid):
                     rock = move_rock(-1, 0, rock, visited_grid, False)
@@ -88,10 +117,12 @@ def solve(data, height=2022):
                 break
         rock_count += 1
 
-    return max([x[1] for x in visited_grid])
+    return get_top(visited_grid)
 
 
 with open('input.in') as f:
     data = f.read()
-    # solve(TEST_INPUT, 1000000000000)
+    # Part 1: 3092
+    # Part 2: 1528323699442
     print(f"Part 1: {solve(data)}")
+    print(f"Part 2: {solve(data, 1000000000000)}")
