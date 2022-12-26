@@ -44,11 +44,14 @@ DIR_SEQUENCE = [
 
 
 def get_elves_coords(data):
-    elves = []
+    # I need to learn the performance differences of set and list
+    # I had this as a list and it was so slower (taking 10+ seconds for part 1 alone). I turned this into set and both
+    # parts ran within 5 seconds.
+    elves = set()
     for row_idx, row in enumerate(data.splitlines()):
         for col_idx, col in enumerate(row):
             if col == '#':
-                elves.append((col_idx + 1, row_idx + 1))
+                elves.add((col_idx + 1, row_idx + 1))
     return elves
 
 
@@ -59,38 +62,16 @@ def are_neighbors_available(elves, elf):
     return True
 
 
-def next_move_coords(elves):
-    next_elves = []
-    for elf in elves:
-        if are_neighbors_available(elves, elf):
-            next_elves.append(elf)
-            continue
-        any_move = False
-        for direction in DIR_SEQUENCE:
-            possible = True
-            for pos in direction:
-                dx, dy = DIRECTION_MAPS[pos]
-                if (elf[0] + dx, elf[1] + dy) in elves:
-                    possible = False
-                    break
-            if possible:
-                any_move = True
-                dx, dy = DIRECTION_MAPS[direction[0]]
-                next_elves.append((elf[0] + dx, elf[1] + dy))
-                break
-        if not any_move:
-            next_elves.append(elf)
-    return next_elves
+def get_empty_tiles_count(elves):
+    count = 0
+    min_x, max_x = min(x[0] for x in elves), max(x[0] for x in elves)
+    min_y, max_y = min(x[1] for x in elves), max(x[1] for x in elves)
 
-
-def update_positions(current_elves, updated_elves):
-    new_elves = [0] * len(current_elves)
-    for idx, elf in enumerate(updated_elves):
-        if elf in updated_elves[0: idx] + updated_elves[idx + 1:]:
-            new_elves[idx] = current_elves[idx]
-        else:
-            new_elves[idx] = elf
-    return new_elves
+    for r in range(min_y, max_y + 1):
+        for c in range(min_x, max_x + 1):
+            if (c, r) not in elves:
+                count += 1
+    return count
 
 
 def execute_round(elves):
@@ -112,47 +93,26 @@ def execute_round(elves):
     for new_pos, elf in updated_positions.items():
         if len(elf) == 1:
             elves.remove(elf[0])
-            elves.append(new_pos)
+            elves.add(new_pos)
     return elves, old == elves
 
 
 def solve(data):
     global DIR_SEQUENCE
-    count = 0
-    elves = get_elves_coords(data)
-    for rd in range(1, 10):
-        next_mv = next_move_coords(elves)
-        if next_mv == elves:
-            print(rd)
-            break
-
-        elves = update_positions(elves, next_mv)
-        DIR_SEQUENCE = [*DIR_SEQUENCE[1:], DIR_SEQUENCE[0]]
-
-        if rd == 10:
-            min_x, max_x = min(x[0] for x in elves), max(x[0] for x in elves)
-            min_y, max_y = min(x[1] for x in elves), max(x[1] for x in elves)
-
-            for r in range(min_y, max_y + 1):
-                for c in range(min_x, max_x + 1):
-                    if (c, r) not in elves:
-                        count += 1
-            print(count)
-
-
-def solve_v2(data):
-    global DIR_SEQUENCE
     elves = get_elves_coords(data)
     for rd in range(1, 10000):
-        print(rd)
         elves, same = execute_round(elves)
         DIR_SEQUENCE = [*DIR_SEQUENCE[1:], DIR_SEQUENCE[0]]
         if same:
-            print(rd)
+            yield rd
             break
+        if rd == 10:
+            yield get_empty_tiles_count(elves)
 
 
 with open('input.in') as f:
     data = f.read()
-    # Part 1: 4138
-    print(solve_v2(data))
+    for idx, output in enumerate(solve(data), 1):
+        # Part 1: 4138
+        # Part 2: 1010
+        print(f"Part {idx}: {output}")
