@@ -46,7 +46,7 @@ DIR_SEQUENCE = [
 def get_elves_coords(data):
     # I need to learn the performance differences of set and list
     # I had this as a list and it was so slower (taking 10+ seconds for part 1 alone). I turned this into set and both
-    # parts ran within 5 seconds.
+    # parts ran within 10 seconds.
     elves = set()
     for row_idx, row in enumerate(data.splitlines()):
         for col_idx, col in enumerate(row):
