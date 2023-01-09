@@ -1,4 +1,6 @@
 
+from collections import deque
+
 TEST_INPUT = '''#.######
 #>>.<^<#
 #.<..<<#
@@ -49,77 +51,55 @@ def parse(data):
     return output, blizz_coords, len(data[0]), len(data)
 
 
-def print_blizzard(blizzard, max_x, max_y):
-    for y in range(2, max_y):
-        output = ''
-        for x in range(2, max_x):
-            dir_found = False
-            for dir in ['>', '<', '^', 'v']:
-                if (x, y, dir) in blizzard:
-                    output += dir
-                    dir_found = True
-                    break
-            if not dir_found:
-                output += '.'
-        print(output)
-
-
-def solve(blizzards, blizz_coords, max_x, max_y, start, end):
+def bfs(blizzards, blizz_coords, max_x, max_y, start, end, mins):
     state = set()
-    queue = [(*start, 0, 0, 0)]
+    queue = deque([(*start, mins)])
     bliz_time = {}
-    p1 = 10000000
-    p2 = 1000000
 
     while len(queue) > 0:
-        x, y, minutes, start_visitation, end_visitation = queue.pop(0)
+        x, y, minutes = queue.popleft()
 
         if (x, y) == end:
-            if end_visitation == 0 and start_visitation == 0:
-                end_visitation = 1
-                p1 = min(p1, minutes)
-                print(p1)
-            if end_visitation == 1 and start_visitation == 1:
-                print("v2", minutes)
-                return
+            return minutes, blizzards, blizz_coords
 
-        if (x, y) == start and end_visitation == 1 and start_visitation == 0:
-            start_visitation = 1
-
-        # this needs fixups to get correct results for p2
         if (x <= 1 or x >= max_x or y <= 1 or y >= max_y) and ((x, y) != start):
             continue
 
-        if (x, y, minutes, start_visitation, end_visitation) in state:
+        if (x, y, minutes, blizz_coords) in state:
             continue
 
-        state.add((x, y, minutes, start_visitation, end_visitation))
+        state.add((x, y, minutes, blizz_coords))
 
         if minutes + 1 not in bliz_time:
             bliz_time[minutes + 1] = update_blizzards(blizzards, max_x, max_y)
-
         blizzards, blizz_coords = bliz_time[minutes + 1]
 
         if (x, y) not in blizz_coords:
-            queue.append((x, y, minutes + 1, start_visitation, end_visitation))
+            queue.append((x, y, minutes + 1))
         if (x + 1, y) not in blizz_coords:
-            queue.append((x + 1, y, minutes + 1, start_visitation, end_visitation))
+            queue.append((x + 1, y, minutes + 1))
         if (x - 1, y) not in blizz_coords:
-            queue.append((x - 1, y, minutes + 1, start_visitation, end_visitation))
+            queue.append((x - 1, y, minutes + 1))
         if (x, y - 1) not in blizz_coords:
-            queue.append((x, y - 1, minutes + 1, start_visitation, end_visitation))
+            queue.append((x, y - 1, minutes + 1))
         if (x, y + 1) not in blizz_coords:
-            queue.append((x, y + 1, minutes + 1, start_visitation, end_visitation))
+            queue.append((x, y + 1, minutes + 1))
 
 
-def part_1(data):
-    blizzards, bliz_coords, max_x, max_y = parse(data)
-    output = solve(blizzards, bliz_coords, max_x, max_y, (2, 1), (max_x-1, max_y))
-    print(output)
+def solve(data):
+    blizzards, blizz_coords, max_x, max_y = parse(data)
+    p1, blizzards, blizz_coords = bfs(blizzards, blizz_coords, max_x, max_y, (2, 1), (max_x - 1, max_y), 0)
+    # mins start from 1 to compensate 1-off error
+    p2, blizzards, blizz_coords = bfs(blizzards, blizz_coords, max_x, max_y, (max_x - 1, max_y), (2, 1), 1)
+    p3, blizzards, blizz_coords = bfs(blizzards, blizz_coords, max_x, max_y, (2, 1), (max_x - 1, max_y), 1)
+    return p1, p1 + p2 + p3
 
 
-part_1(TEST_INPUT)
-# Part 1: 271
-# with open('input.in') as f:
-#     data = f.read()
-#     part_1(data)
+with open('input.in') as f:
+    data = f.read()
+    part1, part2 = solve(data)
+    # Part 1: 271
+    # Part 2: 813
+    # Still a bit slow, despite using state. takes around 2 mins.
+    print(f"Part 1: {part1}")
+    print(f"Part 2: {part2}")
